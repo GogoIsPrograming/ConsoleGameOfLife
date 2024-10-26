@@ -64,7 +64,7 @@ def main(stdscr):
     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)  # Cursor
 
     # Instructions
-    instructions_setup = "W/A/S/D: Move | Space: Toggle Cell | F: Start Simulation | Q: Quiti | 1: set interval to 100ms | 2: 25ms | 3: 1ms"
+    instructions_setup = "W/A/S/D: Move | Space: Toggle Cell | F: Start Simulation | Q: Quiti | 1: set interval to 100ms | 2: 25ms | 3: 1ms | C: Clear"
     instructions_simulation = "Simulation Running. Press 'F' to Pause | Q: Quit"
 
     while True:
@@ -105,6 +105,8 @@ def main(stdscr):
                     interval = 0.025
                 elif key == "3":
                     interval = 0.001
+                elif key.lower() == "c":
+                    live_cells = set()
 
             # Boundary checks
             max_y, max_x = stdscr.getmaxyx()
@@ -182,7 +184,6 @@ def main(stdscr):
             # Optional: Display generation count
             # Implement a generation counter if desired
 
-            # Refresh at a fixed rate (e.g., every 200ms)
             stdscr.refresh()
             time.sleep(interval)
 
