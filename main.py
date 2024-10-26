@@ -4,6 +4,9 @@ import locale
 import time
 from collections import defaultdict
 
+# Import patterns from patterns.py
+from patterns import simple_patterns, complex_patterns
+
 # Set the locale to support Unicode
 locale.setlocale(locale.LC_ALL, "")
 
@@ -28,6 +31,44 @@ def next_generation(live_cells):
             new_live_cells.add(cell)
 
     return new_live_cells
+
+
+def select_pattern(stdscr, patterns, title):
+    # Get screen dimensions
+    max_y, max_x = stdscr.getmaxyx()
+
+    # Modal window dimensions
+    modal_height = len(patterns) + 6
+    modal_width = max(40, len(title) + 4)
+    modal_y = (max_y - modal_height) // 2
+    modal_x = (max_x - modal_width) // 2
+
+    # Create a new window
+    modal_win = curses.newwin(modal_height, modal_width, modal_y, modal_x)
+    modal_win.box()
+
+    # Display the title
+    modal_win.addstr(1, 2, title)
+    idx = 3
+    for key in patterns.keys():
+        pattern = patterns[key]
+        modal_win.addstr(idx, 4, f"{key}: {pattern['name']}")
+        idx += 1
+    modal_win.addstr(modal_height - 2, 2, "Press # to select, or 'C' to cancel")
+
+    modal_win.refresh()
+
+    # Wait for user input
+    while True:
+        try:
+            key = modal_win.getkey()
+        except curses.error:
+            key = None
+        if key is not None:
+            if key.lower() == "c":
+                return None
+            elif key in patterns:
+                return patterns[key]
 
 
 def main(stdscr):
@@ -64,7 +105,7 @@ def main(stdscr):
     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)  # Cursor
 
     # Instructions
-    instructions_setup = "W/A/S/D: Move | Space: Toggle Cell | F: Start Simulation | Q: Quiti | 1: set interval to 100ms | 2: 25ms | 3: 1ms | C: Clear"
+    instructions_setup = "W/A/S/D: Move | Space: Toggle Cell | F: Start Simulation | Q: Quit | 1: 100ms | 2: 25ms | 3: 1ms | C: Clear | P: Pattern | O: Cool Patterns"
     instructions_simulation = "Simulation Running. Press 'F' to Pause | Q: Quit"
 
     while True:
@@ -107,6 +148,38 @@ def main(stdscr):
                     interval = 0.001
                 elif key.lower() == "c":
                     live_cells = set()
+                elif key.lower() == "p":
+                    selected_pattern = select_pattern(
+                        stdscr, simple_patterns, "Select a Simple Pattern:"
+                    )
+                    if selected_pattern:
+                        generation_death = 0
+                        generation_stale_string = ""
+                        # Place pattern around cursor position
+                        for dy, dx in selected_pattern["cells"]:
+                            new_y = y + dy
+                            new_x = x + dx
+                            if 0 <= new_y < curses.LINES and 0 <= new_x < curses.COLS:
+                                live_cells.add((new_y, new_x))
+                    # Redraw the screen
+                    stdscr.clear()
+                    stdscr.refresh()
+                elif key.lower() == "o":
+                    selected_pattern = select_pattern(
+                        stdscr, complex_patterns, "Select a Cool Pattern:"
+                    )
+                    if selected_pattern:
+                        generation_death = 0
+                        generation_stale_string = ""
+                        # Place pattern around cursor position
+                        for dy, dx in selected_pattern["cells"]:
+                            new_y = y + dy
+                            new_x = x + dx
+                            if 0 <= new_y < curses.LINES and 0 <= new_x < curses.COLS:
+                                live_cells.add((new_y, new_x))
+                    # Redraw the screen
+                    stdscr.clear()
+                    stdscr.refresh()
 
             # Boundary checks
             max_y, max_x = stdscr.getmaxyx()
@@ -181,9 +254,7 @@ def main(stdscr):
                     except curses.error:
                         pass  # Ignore if out of bounds
 
-            # Optional: Display generation count
-            # Implement a generation counter if desired
-
+            # Refresh at a fixed rate
             stdscr.refresh()
             time.sleep(interval)
 
